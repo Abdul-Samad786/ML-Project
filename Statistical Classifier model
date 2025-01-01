@@ -1,0 +1,112 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+class SpamClassifier:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.vectorizer = None
+        self.model = None
+
+    def load_dataset(self):
+        """Load the dataset."""
+        try:
+            data = pd.read_csv(self.file_path, sep='\t', header=None, names=['label', 'text'])
+            # Map labels to numerical values (spam: 1, ham: 0)
+            data['label'] = data['label'].map({'ham': 0, 'spam': 1})
+            data.dropna(inplace=True)
+            return data
+        except Exception as e:
+            print(f"Error reading the file: {e}")
+            exit()
+
+    def preprocess_data(self, text, labels):
+        """Split the data into training and testing sets and vectorize the text."""
+        X_train, X_test, y_train, y_test = train_test_split(
+            text, labels, test_size=0.2, random_state=42
+        )
+
+        self.vectorizer = CountVectorizer()
+        X_train_bow = self.vectorizer.fit_transform(X_train)
+        X_test_bow = self.vectorizer.transform(X_test)
+
+        return X_train_bow, X_test_bow, y_train, y_test
+
+    def train_model(self, X_train, y_train):
+        """Train the Naive Bayes model."""
+        self.model = MultinomialNB()
+        self.model.fit(X_train, y_train)
+
+    def evaluate_model(self, X_test, y_test):
+        """Evaluate the trained model,print metrices and visualize its performance."""
+        y_pred = self.model.predict(X_test)
+
+        # Metrics
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred, average='weighted')
+        recall = recall_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average='weighted')
+
+        print("Model Evaluation:")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall: {recall:.4f}")
+        print(f"F1 Score: {f1:.4f}")
+        # Classification Report
+        print("Classification Report:")
+        print(classification_report(y_test, y_pred, target_names=['ham', 'spam']))
+        # Confusion Matrix Visualization
+        plt.figure(1)  # Create the first figure for the confusion matrix
+        cm = confusion_matrix(y_test, y_pred)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['ham', 'spam'], yticklabels=['ham', 'spam'])
+        plt.title("Confusion Matrix")
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+
+        # Metrics Visualization
+        plt.figure(2)  # Create the second figure for the metrics bar chart
+        metrics = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
+        values = [accuracy, precision, recall, f1]
+        plt.bar(metrics, values, color='skyblue')
+        plt.ylim(0, 1)
+        plt.title("Model Performance Metrics")
+        plt.ylabel("Score")
+
+        # Display all figures at the same time
+        plt.show()
+        
+
+    def predict_message(self, message):
+        """Predict whether a single message is spam or ham."""
+        message_transformed = self.vectorizer.transform([message])
+        prediction = self.model.predict(message_transformed)
+        return 'spam' if prediction[0] == 1 else 'ham'
+
+
+# Main execution
+if __name__ == "__main__":
+    file_path = "sms+spam+collection/SMSSpamCollection"  # Path of the dataset
+
+    # Initialize classifier
+    classifier = SpamClassifier(file_path)
+
+    # Load dataset
+    data = classifier.load_dataset()
+
+    # Preprocess data
+    X_train_bow, X_test_bow, y_train, y_test = classifier.preprocess_data(data['text'], data['label'])
+
+    # Train the model
+    classifier.train_model(X_train_bow, y_train)
+
+    # Evaluate the model
+    classifier.evaluate_model(X_test_bow, y_test)
+
+    # Predict a single message
+    sample_message = "Congratulations! You've won a free cruise to the Bahamas. Call now to claim your prize."
+    prediction = classifier.predict_message(sample_message)
+    print(f"The predicted label for the message is: {prediction}")
