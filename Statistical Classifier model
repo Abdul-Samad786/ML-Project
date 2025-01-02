@@ -1,10 +1,10 @@
 import pandas as pd
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+from sklearn.naive_bayes import MultinomialNB
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 class SpamClassifier:
     def __init__(self, file_path):
@@ -58,38 +58,23 @@ class SpamClassifier:
         # Confusion Matrix Visualization haa
         plt.figure(1)  
         cm = confusion_matrix(y_test, y_pred)
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['ham', 'spam'], yticklabels=['ham', 'spam'])
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Normal messges', 'spam'], yticklabels=['Normal messages', 'spam'])
         plt.title("Confusion Matrix")
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
-
-        # Display all figures at the same time
         plt.show()
-        
-
-    def predict_message(self, message):
-        """Predict whether a single message is spam or ham."""
-        message_transformed = self.vectorizer.transform([message])
-        prediction = self.model.predict(message_transformed)
-        return 'spam' if prediction[0] == 1 else 'ham'
-
 
 # Main execution
 if __name__ == "__main__":
     file_path = "dataset" 
-
     # Initialize classifier
     classifier = SpamClassifier(file_path)
-
-    # Load dataset
+    # dataset load hoo rha ha.
     data = classifier.load_dataset()
-
-    # Preprocess data
+    # Preprocessing of  data
     X_train_bow, X_test_bow, y_train, y_test = classifier.preprocess_data(data['text'], data['label'])
-
-    # Train the model
+    # model train ho rha ha
     classifier.train_model(X_train_bow, y_train)
-
-    # Evaluate the model
+    # model ki performance check ki ja rhi ha
     classifier.evaluate_model(X_test_bow, y_test)
 
