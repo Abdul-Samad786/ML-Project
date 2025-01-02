@@ -13,12 +13,11 @@ class SpamClassifier:
         self.model = None
 
     def load_dataset(self):
-        """Load the dataset."""
+        """dataset loading."""
         try:
             data = pd.read_csv(self.file_path, sep='\t', header=None, names=['label', 'text'])
             # Map labels to numerical values (spam: 1, ham: 0)
             data['label'] = data['label'].map({'ham': 0, 'spam': 1})
-            data.dropna(inplace=True)
             return data
         except Exception as e:
             print(f"Error reading the file: {e}")
@@ -27,7 +26,7 @@ class SpamClassifier:
     def preprocess_data(self, text, labels):
         """Split the data into training and testing sets and vectorize the text."""
         X_train, X_test, y_train, y_test = train_test_split(
-            text, labels, test_size=0.2, random_state=42
+            text, labels, test_size=0.5, random_state=34
         )
 
         self.vectorizer = CountVectorizer()
@@ -37,44 +36,32 @@ class SpamClassifier:
         return X_train_bow, X_test_bow, y_train, y_test
 
     def train_model(self, X_train, y_train):
-        """Train the Naive Bayes model."""
+        """Train our model."""
         self.model = MultinomialNB()
         self.model.fit(X_train, y_train)
 
     def evaluate_model(self, X_test, y_test):
-        """Evaluate the trained model,print metrices and visualize its performance."""
+        """Evaluate the trained model,print metrices"""
         y_pred = self.model.predict(X_test)
 
         # Metrics
         accuracy = accuracy_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred, average='weighted')
         recall = recall_score(y_test, y_pred, average='weighted')
-        f1 = f1_score(y_test, y_pred, average='weighted')
-
+        precision = precision_score(y_test, y_pred)
         print("Model Evaluation:")
         print(f"Accuracy: {accuracy:.4f}")
         print(f"Precision: {precision:.4f}")
         print(f"Recall: {recall:.4f}")
-        print(f"F1 Score: {f1:.4f}")
-        # Classification Report
+        # Classification Report ha yaaa
         print("Classification Report:")
         print(classification_report(y_test, y_pred, target_names=['ham', 'spam']))
-        # Confusion Matrix Visualization
-        plt.figure(1)  # Create the first figure for the confusion matrix
+        # Confusion Matrix Visualization haa
+        plt.figure(1)  
         cm = confusion_matrix(y_test, y_pred)
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['ham', 'spam'], yticklabels=['ham', 'spam'])
         plt.title("Confusion Matrix")
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
-
-        # Metrics Visualization
-        plt.figure(2)  # Create the second figure for the metrics bar chart
-        metrics = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
-        values = [accuracy, precision, recall, f1]
-        plt.bar(metrics, values, color='skyblue')
-        plt.ylim(0, 1)
-        plt.title("Model Performance Metrics")
-        plt.ylabel("Score")
 
         # Display all figures at the same time
         plt.show()
@@ -89,7 +76,7 @@ class SpamClassifier:
 
 # Main execution
 if __name__ == "__main__":
-    file_path = "sms+spam+collection/SMSSpamCollection"  # Path of the dataset
+    file_path = "dataset" 
 
     # Initialize classifier
     classifier = SpamClassifier(file_path)
@@ -106,7 +93,3 @@ if __name__ == "__main__":
     # Evaluate the model
     classifier.evaluate_model(X_test_bow, y_test)
 
-    # Predict a single message
-    sample_message = "Congratulations! You've won a free cruise to the Bahamas. Call now to claim your prize."
-    prediction = classifier.predict_message(sample_message)
-    print(f"The predicted label for the message is: {prediction}")
